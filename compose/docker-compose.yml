@@ -127,13 +127,14 @@ services:
       - SERVER_COUNTRIES=${SERVER_COUNTRIES}
       - SERVER_CATEGORIES=${SERVER_CATEGORIES}
       - OPENVPN_PROTOCOL=udp
-      - FIREWALL_INPUT_PORTS=8080,6881
+      - FIREWALL_INPUT_PORTS=8080,6881,8191
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
     ports:
       - "8082:8080/tcp"
       - "6881:6881/tcp"
       - "6881:6881/udp"
+      - "8191:8191/tcp"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -198,6 +199,9 @@ services:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
     restart: unless-stopped
+    dns: [1.1.1.1, 9.9.9.9]
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     environment:
       - TZ=${TZ}
       - PUID=${PUID}
@@ -269,6 +273,8 @@ services:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
     restart: unless-stopped
+    network_mode: "service:gluetun-qb"
+    depends_on: [gluetun-qb]
     environment:
       - TZ=${TZ}
       - LOG_LEVEL=info
