@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../caddy/data:/data
+      - ../caddy/config:/config
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - proxy
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../portainer/data:/data
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    command: --label-enable --cleanup --interval 43200
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Amsterdam
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+      - TZ=Europe/Amsterdam
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+# --- Monitoring stack ---
+
+  uptimekuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ../uptime-kuma:/app/data
+    ports:
+      - "3001:3001"     # local access: http://<vm-ip>:3001
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: ntfy
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Amsterdam
+      - NTFY_LISTEN_HTTP=:80
+    command: ["serve"]
+    volumes:
+      - ../ntfy/cache:/var/cache/ntfy
+      - ../ntfy/config:/etc/ntfy
+    ports:
+      - "8080:80"       # local access: http://<vm-ip>:8080
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge

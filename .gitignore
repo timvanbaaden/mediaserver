@@ -1,0 +1,29 @@
+# Ignore everything by default
+/*
+
+# Allow selected project files
+!.gitignore
+!README.md
+!compose/
+!caddy/
+!homepage/
+!recyclarr/
+!scripts/
+
+# Inside compose, allow only these
+/compose/*
+!/compose/docker-compose.yml
+!/compose/.env.example
+
+# Inside caddy, allow only Caddyfile
+/caddy/*
+!/caddy/Caddyfile
+
+# Optional: allow your templates
+/recyclarr/*
+!/recyclarr/*.yml
+/homepage/*
+!/homepage/*.yml
+
+# Never commit real secrets
+/compose/.env
