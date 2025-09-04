@@ -11,3 +11,9 @@ jellyfin.local {
   reverse_proxy jellyfin:8096
   tls internal
 }
+
+kuma.local {
+  reverse_proxy uptime-kuma:3001
+  tls internal
+}
+
