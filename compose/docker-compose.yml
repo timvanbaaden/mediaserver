@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+  # --- Core infrastructure ---
   caddy:
     image: caddy:2
     container_name: caddy
@@ -11,9 +12,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ../caddy:/etc/caddy:ro
-      - ../caddy/data:/data
-      - ../caddy/config:/config
+      - /srv/appdata/caddy:/etc/caddy:ro
+      - /srv/appdata/caddy/data:/data
+      - /srv/appdata/caddy/config:/config
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     networks:
@@ -27,8 +28,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TZ}
 
+  # Keep cloudflared only if you have CF_TUNNEL_TOKEN set in the stack env.
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
@@ -36,43 +38,45 @@ services:
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
-      - TZ=Europe/Amsterdam
+      - TZ=${TZ}
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-# --- Monitoring stack ---
-
+  # --- Monitoring stack ---
   uptimekuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
     restart: unless-stopped
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TZ}
     volumes:
-      - ../uptime-kuma:/app/data
+      - /srv/appdata/uptime-kuma:/app/data
     ports:
       - "3001:3001"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - proxy
 
   ntfy:
     image: binwiederhier/ntfy:latest
     container_name: ntfy
     restart: unless-stopped
     environment:
-      - TZ=Europe/Amsterdam
+      - TZ=${TZ}
       - NTFY_LISTEN_HTTP=:80
     command: ["serve"]
     volumes:
-      - ../ntfy/cache:/var/cache/ntfy
-      - ../ntfy/config:/etc/ntfy
+      - /srv/appdata/ntfy/cache:/var/cache/ntfy
+      - /srv/appdata/ntfy/config:/etc/ntfy
     ports:
       - "8080:80"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - proxy
 
-# --- Media stack ---
-
+  # --- Media stack ---
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
@@ -82,8 +86,8 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - ../jellyfin/config:/config
-      - ../jellyfin/cache:/cache
+      - /srv/appdata/jellyfin/config:/config
+      - /srv/appdata/jellyfin/cache:/cache
       - /srv/media:/media:ro
     ports:
       - "8096:8096"
