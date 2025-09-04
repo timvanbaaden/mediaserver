@@ -88,7 +88,7 @@ services:
     volumes:
       - /srv/appdata/jellyfin/config:/config
       - /srv/appdata/jellyfin/cache:/cache
-      - /srv/media:/media:ro
+      - /srv/media:/data:ro
     ports:
       - "8096:8096"
     labels:
