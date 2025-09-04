@@ -17,3 +17,7 @@ kuma.home.arpa {
   tls internal
 }
 
+requests.home.arpa {
+  reverse_proxy jellyseerr:5055
+  tls internal
+}
