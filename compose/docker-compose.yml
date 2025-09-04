@@ -127,7 +127,7 @@ services:
       - SERVER_COUNTRIES=${SERVER_COUNTRIES}
       - SERVER_CATEGORIES=${SERVER_CATEGORIES}
       - OPENVPN_PROTOCOL=udp
-      - FIREWALL_INPUT_PORTS=8082,6881
+      - FIREWALL_INPUT_PORTS=8080,6881
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
     ports:
@@ -170,7 +170,7 @@ services:
       - SERVER_COUNTRIES=${SERVER_COUNTRIES}
       - SERVER_CATEGORIES=${SERVER_CATEGORIES}
       - OPENVPN_PROTOCOL=udp
-      - FIREWALL_INPUT_PORTS=8083
+      - FIREWALL_INPUT_PORTS=8080
     volumes:
       - /srv/appdata/gluetun-sab:/gluetun
     ports:
@@ -264,6 +264,20 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - proxy
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - LOG_LEVEL=info
+    ports:
+      - "8191:8191"
+    networks:
+      - proxy
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
 networks:
   proxy:
