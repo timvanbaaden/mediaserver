@@ -65,7 +65,7 @@ services:
     volumes:
       - ../uptime-kuma:/app/data
     ports:
-      - "3001:3001"     # local access: http://<vm-ip>:3001
+      - "3001:3001"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -81,9 +81,30 @@ services:
       - ../ntfy/cache:/var/cache/ntfy
       - ../ntfy/config:/etc/ntfy
     ports:
-      - "8080:80"       # local access: http://<vm-ip>:8080
+      - "8080:80"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+
+# --- Media stack ---
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - ../jellyfin/config:/config
+      - ../jellyfin/cache:/cache
+      - /srv/media:/media:ro
+    ports:
+      - "8096:8096"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - proxy
 
 networks:
   proxy:
