@@ -1,3 +1,13 @@
 :80 {
   respond "Caddy is running" 200
 }
+
+ntfy.local {
+  reverse_proxy ntfy:80
+  tls internal
+}
+
+jellyfin.local {
+  reverse_proxy jellyfin:8096
+  tls internal
+}
