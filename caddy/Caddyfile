@@ -2,17 +2,17 @@
   respond "Caddy is running" 200
 }
 
-ntfy.local {
+ntfy.home.arpa {
   reverse_proxy ntfy:80
   tls internal
 }
 
-jellyfin.local {
+jellyfin.home.arpa {
   reverse_proxy jellyfin:8096
   tls internal
 }
 
-kuma.local {
+kuma.home.arpa {
   reverse_proxy uptime-kuma:3001
   tls internal
 }
