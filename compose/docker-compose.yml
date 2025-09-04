@@ -19,20 +19,6 @@ services:
     networks:
       - proxy
 
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
-    environment:
-      - TZ=Europe/Amsterdam
-    ports:
-      - "9000:9000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ../portainer/data:/data
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
