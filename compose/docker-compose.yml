@@ -280,8 +280,6 @@ services:
       - LOG_LEVEL=info
     ports:
       - "8191:8191"
-    networks:
-      - proxy
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
