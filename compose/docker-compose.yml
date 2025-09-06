@@ -269,15 +269,16 @@ services:
     networks:
       - proxy
 
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
+  byparr:
+    image: ghcr.io/byparr/byparr:latest
+    container_name: byparr
     restart: unless-stopped
-    network_mode: "service:gluetun-qb"
-    depends_on: [gluetun-qb]
     environment:
       - TZ=${TZ}
-      - LOG_LEVEL=info
+    volumes:
+      - /srv/appdata/byparr:/config
+    networks:
+      - proxy
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
