@@ -275,12 +275,18 @@ services:
     restart: unless-stopped
     environment:
       - TZ=${TZ}
+      - LOG_LEVEL=DEBUG
     volumes:
       - /srv/appdata/byparr:/config
     networks:
       - proxy
+    shm_size: "1g"
+    dns:
+      - 9.9.9.9
+      - 194.242.2.2
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+
 
 networks:
   proxy:
