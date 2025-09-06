@@ -270,7 +270,7 @@ services:
       - proxy
 
   byparr:
-    image: ghcr.io/byparr/byparr:latest
+    image: ghcr.io/thephaseless/byparr:latest
     container_name: byparr
     restart: unless-stopped
     environment:
