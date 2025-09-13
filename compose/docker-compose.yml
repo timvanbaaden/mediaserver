@@ -199,7 +199,7 @@ services:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
     restart: unless-stopped
-    dns: [1.1.1.1, 9.9.9.9]
+    dns: [9.9.9.9, 194.242.2.2]
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
     environment:
@@ -287,6 +287,23 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:latest
+    container_name: recyclarr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - CRON_SCHEDULE=@daily
+    user: "${PUID}:${PGID}"
+    volumes:
+      - /srv/appdata/recyclarr:/config
+    depends_on:
+      - sonarr
+      - radarr
+    networks:
+      - proxy
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
 networks:
   proxy:
