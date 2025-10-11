@@ -111,7 +111,6 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # --- VPN for qBittorrent: PIA (WireGuard + Port Forwarding) ---
   gluetun-qb:
     image: qmcgaw/gluetun:latest
     container_name: gluetun-qb
@@ -121,17 +120,14 @@ services:
       - /dev/net/tun:/dev/net/tun
     environment:
       - TZ=${TZ}
-      - VPN_SERVICE_PROVIDER=private internet access
+      - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
-      # WireGuard creds (from .env)
       - WIREGUARD_PRIVATE_KEY=${PIA_WG_PRIVATE_KEY}
       - WIREGUARD_ADDRESSES=${PIA_WG_ADDRESS}
       - WIREGUARD_ENDPOINT_IP=${PIA_WG_ENDPOINT_IP}
       - WIREGUARD_ENDPOINT_PORT=${PIA_WG_ENDPOINT_PORT}
-      # Port forwarding enabled; write the chosen port here:
       - PORT_FORWARDING=on
       - PORT_FORWARDING_STATUS_FILE=/gluetun/forwarded_port
-      # Only open WebUI inbound via VPN container
       - FIREWALL_INPUT_PORTS=8080
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
