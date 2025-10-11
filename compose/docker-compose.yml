@@ -104,7 +104,6 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # --- VPN for qBittorrent: PIA (WireGuard + Port Forwarding) ---
   gluetun-qb:
     image: qmcgaw/gluetun:latest
     container_name: gluetun-qb
@@ -121,7 +120,6 @@ services:
       - WIREGUARD_ADDRESSES=${PIA_WG_ADDRESS}
       - WIREGUARD_ENDPOINT_IP=${PIA_WG_ENDPOINT_IP}
       - WIREGUARD_ENDPOINT_PORT=${PIA_WG_ENDPOINT_PORT}
-      # Port forwarding (new var names)
       - VPN_PORT_FORWARDING=on
       - VPN_PORT_FORWARDING_STATUS_FILE=/gluetun/forwarded_port
       - VPN_PORT_FORWARDING_PROVIDER="private internet access"
@@ -129,7 +127,6 @@ services:
       - VPN_PORT_FORWARDING_PASSWORD=${PIA_PASS}
       - VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c 'wget -O- --retry-connrefused --post-data "json={\"listen_port\":{{PORTS}}}" http://127.0.0.1:8080/api/v2/app/setPreferences 2>&1'
       - SERVER_NAMES=amsterdam428
-      # Only WebUI inbound
       - FIREWALL_INPUT_PORTS=8080
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
@@ -155,8 +152,6 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-
-  # --- Usenet downloader stays on Nord (unchanged) ---
   gluetun-sab:
     image: qmcgaw/gluetun:latest
     container_name: gluetun-sab
@@ -298,6 +293,22 @@ services:
     networks: [proxy]
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+
+  shoko_server:
+    image: ghcr.io/shokoanime/server:latest
+    container_name: shoko_server
+    restart: unless-stopped
+    shm_size: 256m
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    ports:
+      - "8111:8111"         # Shoko WebUI + API
+    volumes:
+      - /srv/appdata/shoko:/home/shoko/.shoko
+      - /srv/media/anime:/mnt/anime:rw
+    networks: [proxy]
 
 networks:
   proxy:
