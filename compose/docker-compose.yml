@@ -116,6 +116,7 @@ services:
       - TZ=${TZ}
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
+      - WIREGUARD_PUBLIC_KEY=${PIA_WG_PUBLIC_KEY}
       - WIREGUARD_PRIVATE_KEY=${PIA_WG_PRIVATE_KEY}
       - WIREGUARD_ADDRESSES=${PIA_WG_ADDRESS}
       - WIREGUARD_ENDPOINT_IP=${PIA_WG_ENDPOINT_IP}
@@ -129,7 +130,7 @@ services:
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
     ports:
-      - "8082:8080/tcp"   # qB WebUI through Gluetun
+      - "8082:8080/tcp"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
