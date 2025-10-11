@@ -111,6 +111,7 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
+  # --- VPN for qBittorrent: PIA (WireGuard + Port Forwarding) ---
   gluetun-qb:
     image: qmcgaw/gluetun:latest
     container_name: gluetun-qb
@@ -120,21 +121,22 @@ services:
       - /dev/net/tun:/dev/net/tun
     environment:
       - TZ=${TZ}
-      - VPN_SERVICE_PROVIDER=nordvpn
-      - VPN_TYPE=openvpn
-      - OPENVPN_USER=${NORD_USER}
-      - OPENVPN_PASSWORD=${NORD_PASS}
-      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
-      - SERVER_CATEGORIES=${SERVER_CATEGORIES}
-      - OPENVPN_PROTOCOL=udp
-      - FIREWALL_INPUT_PORTS=8080,6881,8191
+      - VPN_SERVICE_PROVIDER=private internet access
+      - VPN_TYPE=wireguard
+      # WireGuard creds (from .env)
+      - WIREGUARD_PRIVATE_KEY=${PIA_WG_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${PIA_WG_ADDRESS}
+      - WIREGUARD_ENDPOINT_IP=${PIA_WG_ENDPOINT_IP}
+      - WIREGUARD_ENDPOINT_PORT=${PIA_WG_ENDPOINT_PORT}
+      # Port forwarding enabled; write the chosen port here:
+      - PORT_FORWARDING=on
+      - PORT_FORWARDING_STATUS_FILE=/gluetun/forwarded_port
+      # Only open WebUI inbound via VPN container
+      - FIREWALL_INPUT_PORTS=8080
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
     ports:
-      - "8082:8080/tcp"
-      - "6881:6881/tcp"
-      - "6881:6881/udp"
-      - "8191:8191/tcp"
+      - "8082:8080/tcp"   # qB WebUI through Gluetun
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -155,6 +157,44 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
+  # Auto-sync qB's listen port to the PIA forwarded port
+  qb-port-sync:
+    image: alpine:3.20
+    container_name: qb-port-sync
+    restart: unless-stopped
+    depends_on: [gluetun-qb, qbittorrent]
+    network_mode: "service:gluetun-qb"
+    volumes:
+      - /srv/appdata/gluetun-qb:/gluetun:ro
+    entrypoint: ["/bin/sh","-c"]
+    command: |
+      set -e
+      apk add --no-cache curl jq >/dev/null
+      echo "qb-port-sync: waiting for forwarded_port..."
+      while [ ! -s /gluetun/forwarded_port ]; do sleep 2; done
+      PORT=$(tr -d '\r\n' </gluetun/forwarded_port)
+      echo "qb-port-sync: got port $${PORT}"
+      for i in 1 2 3 4 5; do
+        curl -s -c /tmp/c -d "username=${QB_USER}&password=${QB_PASS}" ${QB_URL}/api/v2/auth/login && break
+        sleep 2
+      done
+      curl -s -b /tmp/c --data "json={\"listen_port\":$${PORT},\"random_port\":false}" ${QB_URL}/api/v2/app/setPreferences
+      echo "qb-port-sync: set qB listen_port=$${PORT}"
+      while true; do
+        NEW=$$(tr -d '\r\n' </gluetun/forwarded_port)
+        if [ "$${NEW}" != "$${PORT}" ] && [ -n "$${NEW}" ]; then
+          PORT=$${NEW}
+          echo "qb-port-sync: port changed -> $${PORT}; updating qB"
+          curl -s -b /tmp/c --data "json={\"listen_port\":$${PORT},\"random_port\":false}" ${QB_URL}/api/v2/app/setPreferences
+        fi
+        sleep 10
+      done
+    environment:
+      - QB_USER=${QB_USER}
+      - QB_PASS=${QB_PASS}
+      - QB_URL=${QB_URL}
+
+  # --- Usenet downloader stays on Nord (unchanged) ---
   gluetun-sab:
     image: qmcgaw/gluetun:latest
     container_name: gluetun-sab
