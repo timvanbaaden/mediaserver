@@ -156,40 +156,56 @@ services:
 
   # Auto-sync qB listen port to PIA's forwarded port
   qb-port-sync:
-    image: alpine:3.20
+    image: busybox:1.36
     container_name: qb-port-sync
     restart: unless-stopped
-    depends_on: [gluetun-qb, qbittorrent]
+    depends_on:
+      - gluetun-qb
+      - qbittorrent
     network_mode: "service:gluetun-qb"
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun:ro
     entrypoint: ["/bin/sh","-c"]
     command: |
-      set -e
-      apk add --no-cache curl jq >/dev/null
-      echo "qb-port-sync: waiting for forwarded_port..."
+      set -eu
+      echo "qb-port-sync: waiting for forwarded_port from gluetun..."
       while [ ! -s /gluetun/forwarded_port ]; do sleep 2; done
-      PORT=$(tr -d '\r\n' </gluetun/forwarded_port)
-      echo "qb-port-sync: got port $${PORT}"
-      for i in 1 2 3 4 5; do
-        curl -s -c /tmp/c -d "username=${QB_USER}&password=${QB_PASS}" ${QB_URL}/api/v2/auth/login && break
+      PORT="$(tr -d '\r\n' </gluetun/forwarded_port)"
+      echo "qb-port-sync: got forwarded port: ${PORT}"
+
+      until wget -qO- "${QB_URL}/api/v2/app/version" >/dev/null 2>&1; do
+        echo "qb-port-sync: qB not up yet, retrying..."
         sleep 2
       done
-      curl -s -b /tmp/c --data "json={\"listen_port\":$${PORT},\"random_port\":false}" ${QB_URL}/api/v2/app/setPreferences
-      echo "qb-port-sync: set qB listen_port=$${PORT}"
+
+      wget -q \
+        --save-cookies /tmp/c --keep-session-cookies \
+        --post-data "username=${QB_USER}&password=${QB_PASS}" \
+        -O - "${QB_URL}/api/v2/auth/login" >/dev/null || true
+
+      wget -q \
+        --load-cookies /tmp/c \
+        --post-data "json={\"listen_port\":${PORT},\"random_port\":false}" \
+        -O - "${QB_URL}/api/v2/app/setPreferences" >/dev/null
+      echo "qb-port-sync: set qB listen_port=${PORT}"
+
+      LAST="${PORT}"
       while true; do
-        NEW=$$(tr -d '\r\n' </gluetun/forwarded_port)
-        if [ "$${NEW}" != "$${PORT}" ] && [ -n "$${NEW}" ]; then
-          PORT=$${NEW}
-          echo "qb-port-sync: port changed -> $${PORT}; updating qB"
-          curl -s -b /tmp/c --data "json={\"listen_port\":$${PORT},\"random_port\":false}" ${QB_URL}/api/v2/app/setPreferences
+        CUR="$(tr -d '\r\n' </gluetun/forwarded_port || true)"
+        if [ -n "${CUR}" ] && [ "${CUR}" != "${LAST}" ]; then
+          echo "qb-port-sync: port changed -> ${CUR}, updating qB"
+          wget -q \
+            --load-cookies /tmp/c \
+            --post-data "json={\"listen_port\":${CUR},\"random_port\":false}" \
+            -O - "${QB_URL}/api/v2/app/setPreferences" >/dev/null || true
+          LAST="${CUR}"
         fi
         sleep 10
       done
     environment:
       - QB_USER=${QB_USER}
       - QB_PASS=${QB_PASS}
-      - QB_URL=http://127.0.0.1:8080
+      - QB_URL=${QB_URL}
 
   # --- Usenet downloader stays on Nord (unchanged) ---
   gluetun-sab:
