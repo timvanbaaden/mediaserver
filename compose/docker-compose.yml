@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # --- Core infrastructure ---
   caddy:
@@ -17,8 +15,7 @@ services:
       - /srv/appdata/caddy/config:/config
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   watchtower:
     image: containrrr/watchtower:latest
@@ -54,8 +51,7 @@ services:
       - "3001:3001"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   ntfy:
     image: binwiederhier/ntfy:latest
@@ -72,8 +68,7 @@ services:
       - "8080:80"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   # --- Media stack ---
   jellyfin:
@@ -92,8 +87,7 @@ services:
       - "8096:8096"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
@@ -106,38 +100,38 @@ services:
       - /srv/appdata/jellyseerr:/app/config
     ports:
       - "5055:5055"
-    networks:
-      - proxy
+    networks: [proxy]
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-gluetun-qb:
-  image: qmcgaw/gluetun:latest
-  container_name: gluetun-qb
-  restart: unless-stopped
-  cap_add: [NET_ADMIN]
-  devices: ["/dev/net/tun:/dev/net/tun"]
-  environment:
-    - TZ=${TZ}
-    - VPN_SERVICE_PROVIDER=custom
-    - VPN_TYPE=wireguard
-    - WIREGUARD_PRIVATE_KEY=${PIA_WG_PRIVATE_KEY}
-    - WIREGUARD_ADDRESSES=${PIA_WG_ADDRESS}
-    - WIREGUARD_ENDPOINT_IP=${PIA_WG_ENDPOINT_IP}
-    - WIREGUARD_ENDPOINT_PORT=${PIA_WG_ENDPOINT_PORT}
-    - VPN_PORT_FORWARDING=on
-    - VPN_PORT_FORWARDING_STATUS_FILE=/gluetun/forwarded_port
-    - VPN_PORT_FORWARDING_PROVIDER=private internet access
-    - VPN_PORT_FORWARDING_USERNAME=${PIA_USER}
-    - VPN_PORT_FORWARDING_PASSWORD=${PIA_PASS}
-    - FIREWALL_INPUT_PORTS=8080
-  volumes:
-    - /srv/appdata/gluetun-qb:/gluetun
-  ports:
-    - "8082:8080/tcp"
-  labels:
-    - "com.centurylinklabs.watchtower.enable=true"
-
+  # --- VPN for qBittorrent: PIA (WireGuard + Port Forwarding) ---
+  gluetun-qb:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun-qb
+    restart: unless-stopped
+    cap_add: [NET_ADMIN]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - TZ=${TZ}
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${PIA_WG_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${PIA_WG_ADDRESS}
+      - WIREGUARD_ENDPOINT_IP=${PIA_WG_ENDPOINT_IP}
+      - WIREGUARD_ENDPOINT_PORT=${PIA_WG_ENDPOINT_PORT}
+      # Port forwarding (new var names)
+      - VPN_PORT_FORWARDING=on
+      - VPN_PORT_FORWARDING_STATUS_FILE=/gluetun/forwarded_port
+      - VPN_PORT_FORWARDING_PROVIDER="private internet access"
+      # Only WebUI inbound
+      - FIREWALL_INPUT_PORTS=8080
+    volumes:
+      - /srv/appdata/gluetun-qb:/gluetun
+    ports:
+      - "8082:8080/tcp"   # qB WebUI through Gluetun
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -156,7 +150,7 @@ gluetun-qb:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # Auto-sync qB's listen port to the PIA forwarded port
+  # Auto-sync qB listen port to PIA's forwarded port
   qb-port-sync:
     image: alpine:3.20
     container_name: qb-port-sync
@@ -191,7 +185,7 @@ gluetun-qb:
     environment:
       - QB_USER=${QB_USER}
       - QB_PASS=${QB_PASS}
-      - QB_URL=${QB_URL}
+      - QB_URL=http://127.0.0.1:8080
 
   # --- Usenet downloader stays on Nord (unchanged) ---
   gluetun-sab:
@@ -251,8 +245,7 @@ gluetun-qb:
       - "9696:9696"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -269,8 +262,7 @@ gluetun-qb:
       - "8989:8989"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
@@ -287,8 +279,7 @@ gluetun-qb:
       - "7878:7878"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
@@ -305,8 +296,7 @@ gluetun-qb:
       - "6767:6767"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - proxy
+    networks: [proxy]
 
   byparr:
     image: ghcr.io/thephaseless/byparr:latest
@@ -317,8 +307,7 @@ gluetun-qb:
       - LOG_LEVEL=DEBUG
     volumes:
       - /srv/appdata/byparr:/config
-    networks:
-      - proxy
+    networks: [proxy]
     shm_size: "1g"
     dns:
       - 9.9.9.9
@@ -336,11 +325,8 @@ gluetun-qb:
     user: "${PUID}:${PGID}"
     volumes:
       - /srv/appdata/recyclarr:/config
-    depends_on:
-      - sonarr
-      - radarr
-    networks:
-      - proxy
+    depends_on: [sonarr, radarr]
+    networks: [proxy]
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
