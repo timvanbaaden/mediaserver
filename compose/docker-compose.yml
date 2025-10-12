@@ -322,7 +322,7 @@ services:
     networks: [proxy]
 
   cross-seed:
-    image: lscr.io/hotio/cross-seed:latest
+    image: ghcr.io/cross-seed/cross-seed:latest
     container_name: cross-seed
     restart: unless-stopped
     network_mode: "service:gluetun-qb"
