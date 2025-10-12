@@ -129,6 +129,7 @@ services:
       - SERVER_NAMES=amsterdam428
       - FIREWALL_INPUT_PORTS=8080
       - FIREWALL_OUTBOUND_SUBNETS=192.168.1.0/24
+      - ROUTE_NETWORKS=192.168.1.0/24
     volumes:
       - /srv/appdata/gluetun-qb:/gluetun
     ports:
