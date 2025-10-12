@@ -132,6 +132,7 @@ services:
       - /srv/appdata/gluetun-qb:/gluetun
     ports:
       - "8082:8080/tcp"
+      - "9705:9705/tcp"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -295,7 +296,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
 
   huntarr:
-    image: ghcr.io/thephaseless/huntarr:latest
+    image: huntarr/huntarr:latest
     container_name: huntarr
     restart: unless-stopped
     network_mode: "service:gluetun-qb"
@@ -329,10 +330,13 @@ services:
     depends_on: [gluetun-qb]
     environment:
       - TZ=${TZ}
+      - PUID=1000
+      - PGID=1000
     volumes:
       - /srv/appdata/cross-seed:/config
       - /srv/appdata/qbittorrent:/qbconfig:ro
       - /srv/media:/data:ro
+    command: daemon
       
 networks:
   proxy:
