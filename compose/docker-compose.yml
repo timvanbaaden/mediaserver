@@ -321,7 +321,7 @@ services:
       - "8111:8111"
     volumes:
       - /srv/appdata/shoko:/home/shoko/.shoko
-      - /srv/media/anime:/mnt/anime:rw
+      - /srv/media:/mnt:rw
     networks: [proxy]
 
   cross-seed:
