@@ -336,7 +336,7 @@ services:
     volumes:
       - /srv/appdata/cross-seed:/config
       - /srv/appdata/qbittorrent:/qbconfig:ro
-      - /srv/media:/data:ro
+      - /srv/media:/data
     command: daemon
       
 networks:
